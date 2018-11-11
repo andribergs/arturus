@@ -3,12 +3,16 @@ const canvasConfig = {
 	height: 512,
 }
 
-document.addEventListener("DOMContentLoaded", function(event) {
+document.addEventListener("DOMContentLoaded", main);
+
+function main() {
 	const canvas = document.getElementById('whiteboard');
 	const context = initCanvas(canvas);
 
+	canvasConfig.database = new Database(config);
+
 	initCanvasEvents(canvas, context)
-});
+};
 
 function initCanvas(canvas){
 	canvas.setAttribute('width', canvasConfig.width);
@@ -74,29 +78,3 @@ function redraw(context){
 	}
 }
 
-
-firebase.initializeApp(config);
-
-const rootRef = firebase.database().ref();
-
-rootRef.on('child_changed', function(data) {
-	console.log("child_changed", data.val());
-});
-
-rootRef.on('child_added', function(data) {
-	console.log("child_added", data.val());
-});
-
-rootRef.on('child_removed', function(data) {
-	console.log("child_removed", data.val());
-});
-
-rootRef.once('value').then(function(snapshot) {
-	console.log("value", snapshot.val());
-});
-
-function addLine(name, points){
-	update = {};
-	update[name] = points;
-	rootRef.update(update);
-}
