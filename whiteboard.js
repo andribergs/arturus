@@ -1,6 +1,7 @@
 const canvasConfig = {
 	width: 512,
 	height: 512,
+	strokeStyle: "#df4b26",
 }
 
 document.addEventListener("DOMContentLoaded", main);
@@ -24,9 +25,29 @@ function initCanvas(canvas){
 
 function initEvents(){
 	const clearCanvasButton = document.getElementById('clear');
+	const colorSelect = document.getElementById('colorpicker');
 	clearCanvasButton.onclick = () => {
 		canvasConfig.database.removeAllObjects();
 		console.log('remove all objects');
+	}
+	colorSelect.onchange = (e) => {
+		const color = e.target.selectedOptions[0].value;
+		switch (color) {
+			case "black":
+				canvasConfig.strokeStyle = "#000000"
+				break;
+			case "green":
+				canvasConfig.strokeStyle = "#00FF00"
+				break;
+			case "red":
+				canvasConfig.strokeStyle = "#df4b26"
+				break;
+			case "yellow":
+				canvasConfig.strokeStyle = "#999900"
+				break;
+			default:
+				break;
+		}
 	}
 }
 
@@ -106,7 +127,7 @@ function addClick(x, y, dragging) {
 
 function drawObject(object, context) {
 	console.log(`drawing object: ${object}`);
-	context.strokeStyle = "#df4b26";
+	context.strokeStyle = canvasConfig.strokeStyle;
 	context.lineJoin = "round";
 	context.lineWidth = 5;
 	if(object.type === "line") {
@@ -123,7 +144,7 @@ function drawObject(object, context) {
 function redraw(context){
 	context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
 
-	context.strokeStyle = "#df4b26";
+	context.strokeStyle = canvasConfig.strokeStyle;
 	context.lineJoin = "round";
 	context.lineWidth = 5;
 
