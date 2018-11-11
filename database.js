@@ -1,5 +1,5 @@
 class Database {
-	constructor(config) {
+	constructor(config, onDataUpdate) {
 		this.config = config;
 		firebase.initializeApp(config);
 		this.rootRef = firebase.database().ref();
@@ -7,7 +7,10 @@ class Database {
 		this.getDataFromServer().then(data => {
 			this.data = data;
 			this.initialized = true;
+			this.onDataUpdate();
 		});
+		this.onDataUpdate = onDataUpdate;
+		this.initEventListeners();
 	}
 
 	getAllObjects() {
@@ -22,22 +25,34 @@ class Database {
 
 	addObject(object) {
 		const key = Date.now();
-		update = {};
+		const update = {};
 		update[key] = object;
-		rootRef.update(update);
+		this.rootRef.update(update);
 	}
 
 	initEventListeners() {
-		rootRef.on('child_changed', function(data) {
-			console.log("child_changed", data.val());
+		const update = data => {
+			if(!this.initialized) return;
+			const key = data.key;
+			const value = data.val();
+			console.log("something happnd: ", key, value);
+			this.data[key] = value;
+			this.onDataUpdate();
+		}
+		this.rootRef.on('child_changed', function(data) {
+			update(data);
 		});
 
-		rootRef.on('child_added', function(data) {
-			console.log("child_added", data.val());
+		this.rootRef.on('child_added', function(data) {
+			update(data);
 		});
 
-		rootRef.on('child_removed', function(data) {
-			console.log("child_removed", data.val());
+		this.rootRef.on('child_removed', data => {
+			const key = data.key;
+			const value = data.val();
+			console.log("deleted ", key, value);
+			delete this.data[key];
+			this.onDataUpdate();
 		});
 	}
 }
