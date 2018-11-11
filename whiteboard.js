@@ -13,12 +13,21 @@ function main() {
 	canvasConfig.database = new Database(config, ()=>{redraw(context);});
 
 	initCanvasEvents(canvas, context)
+	initEvents()
 };
 
 function initCanvas(canvas){
 	canvas.setAttribute('width', canvasConfig.width);
 	canvas.setAttribute('height', canvasConfig.height);
 	return canvas.getContext("2d");
+}
+
+function initEvents(){
+	const clearCanvasButton = document.getElementById('clear');
+	clearCanvasButton.onclick = () => {
+		canvasConfig.database.removeAllObjects();
+		console.log('remove all objects');
+	}
 }
 
 function initCanvasEvents(canvas, context){

@@ -2,10 +2,10 @@ class Database {
 	constructor(config, onDataUpdate) {
 		this.config = config;
 		firebase.initializeApp(config);
-		this.rootRef = firebase.database().ref();
+		this.rootRef = firebase.database().ref('root');
 		this.initialized = false;
 		this.getDataFromServer().then(data => {
-			this.data = data;
+			this.data = data || {};
 			this.initialized = true;
 			this.onDataUpdate();
 		});
@@ -28,6 +28,10 @@ class Database {
 		const update = {};
 		update[key] = object;
 		this.rootRef.update(update);
+	}
+
+	removeAllObjects() {
+		this.rootRef.remove();
 	}
 
 	initEventListeners() {
