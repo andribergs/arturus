@@ -1,3 +1,8 @@
+const canvasConfig = {
+	width: 512,
+	height: 512,
+}
+
 document.addEventListener("DOMContentLoaded", function(event) {
 	const canvas = document.getElementById('whiteboard');
 	const context = initCanvas(canvas);
@@ -6,16 +11,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 
 function initCanvas(canvas){
-	canvas.setAttribute('width', 490);
-	canvas.setAttribute('height', 220);
-	canvas.setAttribute('id', 'canvas');
-	const context = canvas.getContext("2d");
-	return context;
+	canvas.setAttribute('width', canvasConfig.width);
+	canvas.setAttribute('height', canvasConfig.height);
+	return canvas.getContext("2d");
 }
 
 function initCanvasEvents(canvas, context){
 	let paint = false;
-	canvas.onmousedown=function(e){
+
+	canvas.onmousedown = function(e) {
 		let mouseX = e.pageX - this.offsetLeft;
 		let mouseY = e.pageY - this.offsetTop;
 
@@ -23,26 +27,28 @@ function initCanvasEvents(canvas, context){
 		addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
 		redraw(context);
 	};
-	canvas.onmouseup=function(e){
+
+	canvas.onmouseup = function(e) { 
 		paint = false;
 	};
-	canvas.onmousemove=function(e){
-		if(paint){
+
+	canvas.onmousemove = function(e) {
+		if(paint) {
 			addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop, true);
 			redraw(context);
 		}
 	};
-	canvas.onmouseleave=function(e){
+
+	canvas.onmouseleave = function(e) {
 		paint = false;
 	};
 }
 
-let clickX = new Array();
-let clickY = new Array();
-let clickDrag = new Array();
+let clickX = [];
+let clickY = [];
+let clickDrag = [];
 
-function addClick(x, y, dragging)
-{
+function addClick(x, y, dragging) {
 	clickX.push(x);
 	clickY.push(y);
 	clickDrag.push(dragging);
@@ -57,9 +63,9 @@ function redraw(context){
 
 	for(var i=0; i < clickX.length; i++) {
 		context.beginPath();
-		if(clickDrag[i] && i){
+		if(clickDrag[i] && i) {
 			context.moveTo(clickX[i-1], clickY[i-1]);
-		}else{
+		} else {
 			context.moveTo(clickX[i]-1, clickY[i]);
 		}
 		context.lineTo(clickX[i], clickY[i]);
@@ -68,13 +74,10 @@ function redraw(context){
 	}
 }
 
-// Set the configuration for your app
-// TODO: Replace with your project's config object
+
 firebase.initializeApp(config);
 
-// Get a reference to the database service
-var rootRef = firebase.database().ref();
-
+const rootRef = firebase.database().ref();
 
 rootRef.on('child_changed', function(data) {
 	console.log("child_changed", data.val());
