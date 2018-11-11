@@ -3,9 +3,18 @@ class Database {
 		this.config = config;
 		firebase.initializeApp(config);
 		this.rootRef = firebase.database().ref();
+		this.initialized = false;
+		this.getDataFromServer().then(data => {
+			this.data = data;
+			this.initialized = true;
+		});
 	}
 
-	getAllData() {
+	getAllObjects() {
+		return this.initialized ? Object.keys(this.data).map(key => this.data[key]) : [];
+	}
+
+	getDataFromServer() {
 		return this.rootRef.once('value').then(function(snapshot) {
 			return snapshot.val();
 		});

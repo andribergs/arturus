@@ -58,6 +58,10 @@ function addClick(x, y, dragging) {
 	clickDrag.push(dragging);
 }
 
+function drawObject(object, context) {
+	console.log(`drawing object: ${object}`);
+}
+
 function redraw(context){
 	context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
 
@@ -76,5 +80,7 @@ function redraw(context){
 		context.closePath();
 		context.stroke();
 	}
+
+	canvasConfig.database.getAllObjects().forEach(object => { drawObject(object, context); } );
 }
 
