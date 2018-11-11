@@ -61,6 +61,7 @@ function initCanvasEvents(canvas, context){
 		const line = {
 			type: "line",
 			points: [xs, ys],
+			color: canvasConfig.strokeStyle,
 		}
 		canvasConfig.database.addObject(line);
 		xs = [];
@@ -124,7 +125,7 @@ function addClick(x, y, dragging) {
 }
 
 function drawObject(object, context) {
-	context.strokeStyle = canvasConfig.strokeStyle;
+	context.strokeStyle = object.color;
 	context.lineJoin = "round";
 	context.lineWidth = 5;
 	if(object.type === "line") {
