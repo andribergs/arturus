@@ -28,7 +28,6 @@ function initEvents(){
 	const colorSelect = document.getElementById('colorpicker');
 	clearCanvasButton.onclick = () => {
 		canvasConfig.database.removeAllObjects();
-		console.log('remove all objects');
 	}
 	colorSelect.onchange = (e) => {
 		const color = e.target.selectedOptions[0].value;
@@ -53,7 +52,7 @@ function initEvents(){
 
 function initCanvasEvents(canvas, context){
 	let paint = false;
-	let drawingLine = true;
+	let drawingLine = false;
 
 	let xs = [];
 	let ys = [];
@@ -66,6 +65,16 @@ function initCanvasEvents(canvas, context){
 		canvasConfig.database.addObject(line);
 		xs = [];
 		ys = [];
+	}
+
+	const stopDrawing = function() {
+		paint = false;
+		clickX = [];
+		clickY = [];
+		clickDrag = [];
+		if(drawingLine)	addLineToDatabase();
+		drawingLine = false;
+		redraw(context);
 	}
 
 	canvas.onmousedown = function(e) {
@@ -81,13 +90,7 @@ function initCanvasEvents(canvas, context){
 	};
 
 	canvas.onmouseup = function(e) { 
-		paint = false;
-		clickX = [];
-		clickY = [];
-		clickDrag = [];
-		if(drawingLine) addLineToDatabase();
-		drawingLine = false;
-		redraw(context);
+		stopDrawing();
 	};
 
 	canvas.onmousemove = function(e) {
@@ -104,14 +107,9 @@ function initCanvasEvents(canvas, context){
 		}
 	};
 
+
 	canvas.onmouseleave = function(e) {
-		paint = false;
-		clickX = [];
-		clickY = [];
-		clickDrag = [];
-		if(drawingLine)	addLineToDatabase();
-		drawingLine = false;
-		redraw(context);
+		stopDrawing();
 	};
 }
 
@@ -126,7 +124,6 @@ function addClick(x, y, dragging) {
 }
 
 function drawObject(object, context) {
-	console.log(`drawing object: ${object}`);
 	context.strokeStyle = canvasConfig.strokeStyle;
 	context.lineJoin = "round";
 	context.lineWidth = 5;

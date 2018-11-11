@@ -39,7 +39,6 @@ class Database {
 			if(!this.initialized) return;
 			const key = data.key;
 			const value = data.val();
-			console.log("something happnd: ", key, value);
 			this.data[key] = value;
 			this.onDataUpdate();
 		}
@@ -54,7 +53,6 @@ class Database {
 		this.rootRef.on('child_removed', data => {
 			const key = data.key;
 			const value = data.val();
-			console.log("deleted ", key, value);
 			delete this.data[key];
 			this.onDataUpdate();
 		});
