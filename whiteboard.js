@@ -2,19 +2,23 @@ const canvasConfig = {
 	width: 512,
 	height: 512,
 	strokeStyle: "#df4b26",
+	zoomLevels: [0.1, 0.2, 0.5, 0.75, 0.8, 0.9, 1, 1.5, 2, 2.5, 3],
+	zoomLevel: 6,
+	offset: [0, 0],
 }
 
 document.addEventListener("DOMContentLoaded", main);
 
 function main() {
 	const canvas = document.getElementById('whiteboard');
-	canvas.style.border = "1px solid black";
 	const context = initCanvas(canvas);
+	canvas.width = window.innerWidth || document.body.clientWidth;
+	canvas.height = window.innerHeight || document.body.clientHeight;
 
 	canvasConfig.database = new Database(config, ()=>{redraw(context);});
 
-	initCanvasEvents(canvas, context)
-	initEvents()
+	initCanvasEvents(canvas, context);
+	initEvents(context);
 };
 
 function initCanvas(canvas){
@@ -23,14 +27,24 @@ function initCanvas(canvas){
 	return canvas.getContext("2d");
 }
 
-function initEvents(){
+function addTool(name, callback){
+	const toolsContainer = document.getElementById("tools");
+	const button = document.createElement("button");
+	button.textContent = name;
+	button.addEventListener("click", callback);
+	toolsContainer.appendChild(button);
+}
+
+
+function initEvents(context){
 	const clearCanvasButton = document.getElementById('clear');
-	const colorSelect = document.getElementById('colorpicker');
 	clearCanvasButton.onclick = () => {
 		canvasConfig.database.removeAllObjects();
 	}
-	colorSelect.onchange = (e) => {
-		const color = e.target.selectedOptions[0].value;
+
+	const colorSelect = document.getElementById('colorpicker');
+	colorSelect.addEventListener("change", e => {
+		const color = e.target.value;
 		switch (color) {
 			case "black":
 				canvasConfig.strokeStyle = "#000000"
@@ -47,7 +61,19 @@ function initEvents(){
 			default:
 				break;
 		}
-	}
+	});
+
+	addTool("+", () => {
+		canvasConfig.zoomLevel = Math.min(canvasConfig.zoomLevel+1, canvasConfig.zoomLevels.length);
+		console.log(canvasConfig.zoomLevel, canvasConfig.zoomLevels[canvasConfig.zoomLevel]);
+		redraw(context);
+	});
+
+	addTool("-", ()=>{
+		canvasConfig.zoomLevel = Math.max(0, canvasConfig.zoomLevel-1);
+		console.log(canvasConfig.zoomLevel, canvasConfig.zoomLevels[canvasConfig.zoomLevel]);
+		redraw(context);
+	})
 }
 
 function initCanvasEvents(canvas, context){
@@ -56,6 +82,8 @@ function initCanvasEvents(canvas, context){
 
 	let xs = [];
 	let ys = [];
+	let s = 1/canvasConfig.zoomLevels[canvasConfig.zoomLevel];
+
 
 	const addLineToDatabase = function() {
 		const line = {
@@ -79,10 +107,12 @@ function initCanvasEvents(canvas, context){
 	}
 
 	canvas.onmousedown = function(e) {
+		s = 1/canvasConfig.zoomLevels[canvasConfig.zoomLevel];
+		console.log(s);
 		drawingLine = true;
 		paint = true;
-		const x = e.pageX - this.offsetLeft;
-		const y = e.pageY - this.offsetTop;
+		const x = s*(e.pageX - this.offsetLeft);
+		const y = s*(e.pageY - this.offsetTop);
 		xs.push(x);
 		ys.push(y);
 		addClick(x, y);
@@ -95,8 +125,8 @@ function initCanvasEvents(canvas, context){
 	};
 
 	canvas.onmousemove = function(e) {
-		const x = e.pageX - this.offsetLeft;
-		const y = e.pageY - this.offsetTop;
+		const x = s*(e.pageX - this.offsetLeft);
+		const y = s*(e.pageY - this.offsetTop);
 		if(paint) {
 			addClick(x, y, true);
 			redraw(context);
@@ -125,15 +155,16 @@ function addClick(x, y, dragging) {
 }
 
 function drawObject(object, context) {
+	const s = canvasConfig.zoomLevels[canvasConfig.zoomLevel];
 	context.strokeStyle = object.color;
-	context.lineJoin = "round";
-	context.lineWidth = 5;
+	context.lineCap = "round";
+	context.lineWidth = 5*s;
 	if(object.type === "line") {
 		const points = object.points;
 		context.beginPath();
-		context.moveTo(points[0][0], points[1][0]);
+		context.moveTo(s*points[0][0], s*points[1][0]);
 		for(let i=1; i<points[0].length; i++){
-			context.lineTo(points[0][i], points[1][i]);
+			context.lineTo(s*points[0][i], s*points[1][i]);
 		}
 		context.stroke();
 	}
@@ -141,23 +172,25 @@ function drawObject(object, context) {
 
 function redraw(context){
 	context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
+	const s = canvasConfig.zoomLevels[canvasConfig.zoomLevel];
 
 	context.strokeStyle = canvasConfig.strokeStyle;
 	context.lineJoin = "round";
-	context.lineWidth = 5;
+	context.lineWidth = 5*s;
+
+	canvasConfig.database.getAllObjects().forEach(object => { drawObject(object, context); } );
 
 	for(var i=0; i < clickX.length; i++) {
 		context.beginPath();
 		if(clickDrag[i] && i) {
-			context.moveTo(clickX[i-1], clickY[i-1]);
+			context.moveTo(s*clickX[i-1], s*clickY[i-1]);
 		} else {
-			context.moveTo(clickX[i]-1, clickY[i]);
+			context.moveTo(s*clickX[i]-1, s*clickY[i]);
 		}
-		context.lineTo(clickX[i], clickY[i]);
+		context.lineTo(s*clickX[i], s*clickY[i]);
 		context.closePath();
 		context.stroke();
 	}
 
-	canvasConfig.database.getAllObjects().forEach(object => { drawObject(object, context); } );
 }
 
