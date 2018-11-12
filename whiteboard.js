@@ -72,23 +72,25 @@ function scheduleRedraw() {
 }
 
 function updateOffset(du) {
+	const speed = 1/canvasConfig.zoomLevels[canvasConfig.zoomLevel] * canvasConfig.scrollSpeed;
+
 	if(keyIsDown("ArrowLeft")) {
-			canvasConfig.centerPos[0] -= canvasConfig.scrollSpeed;
+			canvasConfig.centerPos[0] += speed;
 			scheduleRedraw();
 	}
 
 	if(keyIsDown("ArrowUp")) {
-			canvasConfig.centerPos[1] -= canvasConfig.scrollSpeed;
+			canvasConfig.centerPos[1] += speed;
 			scheduleRedraw();
 	}
 	
 	if(keyIsDown("ArrowRight")) {
-			canvasConfig.centerPos[0] += canvasConfig.scrollSpeed;
+			canvasConfig.centerPos[0] -= speed;
 			scheduleRedraw();
 	}
 
 	if(keyIsDown("ArrowDown")) {
-			canvasConfig.centerPos[1] += canvasConfig.scrollSpeed;
+			canvasConfig.centerPos[1] -= speed;
 			scheduleRedraw();
 	}
 }
@@ -268,5 +270,6 @@ function redraw(context){
 	}
 
 	canvasConfig.redrawScheduled = false;
+	console.log(`offset: ${canvasConfig.centerPos}`);
 }
 
