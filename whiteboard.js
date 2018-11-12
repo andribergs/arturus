@@ -4,7 +4,8 @@ const canvasConfig = {
 	strokeStyle: "#df4b26",
 	zoomLevels: [0.1, 0.2, 0.5, 0.75, 0.8, 0.9, 1, 1.5, 2, 2.5, 3],
 	zoomLevel: 6,
-	offset: [0, 0],
+	centerPos: [0, 0],
+	scrollSpeed: 10
 }
 
 document.addEventListener("DOMContentLoaded", main);
@@ -35,12 +36,34 @@ function addTool(name, callback){
 	toolsContainer.appendChild(button);
 }
 
-
-function initEvents(context){
+function initEvents(context) {
 	const clearCanvasButton = document.getElementById('clear');
 	clearCanvasButton.onclick = () => {
 		canvasConfig.database.removeAllObjects();
 	}
+
+	document.addEventListener("keydown", e=>{
+		const keyName = e.key;
+		console.log(`key: ${keyName} pressed`);
+		switch (keyName) {
+			case "ArrowLeft":
+				canvasConfig.centerPos[0] -= canvasConfig.scrollSpeed;
+				break;
+			case "ArrowUp":
+				canvasConfig.centerPos[1] -= canvasConfig.scrollSpeed;
+				break;
+			case "ArrowRight":
+				canvasConfig.centerPos[0] += canvasConfig.scrollSpeed;
+				break;
+			case "ArrowDown":
+				canvasConfig.centerPos[1] += canvasConfig.scrollSpeed;
+				break;
+		}
+		if(keyName === "ArrowLeft" || keyName === "ArrowRight" ||
+				keyName === "ArrowUp" || keyName === "ArrowDown") {
+			redraw(context);
+		}
+	});
 
 	const colorSelect = document.getElementById('colorpicker');
 	colorSelect.addEventListener("change", e => {
@@ -65,15 +88,13 @@ function initEvents(context){
 
 	addTool("+", () => {
 		canvasConfig.zoomLevel = Math.min(canvasConfig.zoomLevel+1, canvasConfig.zoomLevels.length);
-		console.log(canvasConfig.zoomLevel, canvasConfig.zoomLevels[canvasConfig.zoomLevel]);
 		redraw(context);
 	});
 
-	addTool("-", ()=>{
+	addTool("-", () => {
 		canvasConfig.zoomLevel = Math.max(0, canvasConfig.zoomLevel-1);
-		console.log(canvasConfig.zoomLevel, canvasConfig.zoomLevels[canvasConfig.zoomLevel]);
 		redraw(context);
-	})
+	});
 }
 
 function initCanvasEvents(canvas, context){
@@ -83,7 +104,9 @@ function initCanvasEvents(canvas, context){
 	let xs = [];
 	let ys = [];
 	let s = 1/canvasConfig.zoomLevels[canvasConfig.zoomLevel];
-
+	let c = canvasConfig.centerPos;
+	let cx = c[0];
+	let cy = c[1];
 
 	const addLineToDatabase = function() {
 		const line = {
@@ -108,11 +131,13 @@ function initCanvasEvents(canvas, context){
 
 	canvas.onmousedown = function(e) {
 		s = 1/canvasConfig.zoomLevels[canvasConfig.zoomLevel];
-		console.log(s);
+	  c = canvasConfig.centerPos;
+	  cx = c[0];
+	  cy = c[1];
 		drawingLine = true;
 		paint = true;
-		const x = s*(e.pageX - this.offsetLeft);
-		const y = s*(e.pageY - this.offsetTop);
+		const x = -cx + s * (e.pageX - this.offsetLeft);
+		const y = -cy + s * (e.pageY - this.offsetTop);
 		xs.push(x);
 		ys.push(y);
 		addClick(x, y);
@@ -125,8 +150,8 @@ function initCanvasEvents(canvas, context){
 	};
 
 	canvas.onmousemove = function(e) {
-		const x = s*(e.pageX - this.offsetLeft);
-		const y = s*(e.pageY - this.offsetTop);
+		const x = -cx + s * (e.pageX - this.offsetLeft);
+		const y = -cy + s * (e.pageY - this.offsetTop);
 		if(paint) {
 			addClick(x, y, true);
 			redraw(context);
@@ -156,15 +181,18 @@ function addClick(x, y, dragging) {
 
 function drawObject(object, context) {
 	const s = canvasConfig.zoomLevels[canvasConfig.zoomLevel];
+	const o = canvasConfig.centerPos;
+	const cx = o[0];
+	const cy = o[1];
 	context.strokeStyle = object.color;
 	context.lineCap = "round";
 	context.lineWidth = 5*s;
 	if(object.type === "line") {
 		const points = object.points;
 		context.beginPath();
-		context.moveTo(s*points[0][0], s*points[1][0]);
+		context.moveTo(cx + s * points[0][0], cy + s * points[1][0]);
 		for(let i=1; i<points[0].length; i++){
-			context.lineTo(s*points[0][i], s*points[1][i]);
+			context.lineTo(cx + s * points[0][i], cy + s * points[1][i]);
 		}
 		context.stroke();
 	}
@@ -173,6 +201,9 @@ function drawObject(object, context) {
 function redraw(context){
 	context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
 	const s = canvasConfig.zoomLevels[canvasConfig.zoomLevel];
+	const o = canvasConfig.centerPos;
+	const cx = o[0];
+	const cy = o[1];
 
 	context.strokeStyle = canvasConfig.strokeStyle;
 	context.lineJoin = "round";
@@ -183,14 +214,15 @@ function redraw(context){
 	for(var i=0; i < clickX.length; i++) {
 		context.beginPath();
 		if(clickDrag[i] && i) {
-			context.moveTo(s*clickX[i-1], s*clickY[i-1]);
+			context.moveTo(cx + s * clickX[i-1], cy + s * clickY[i-1]);
 		} else {
-			context.moveTo(s*clickX[i]-1, s*clickY[i]);
+			context.moveTo(cx + s * clickX[i]-1, cy + s * clickY[i]);
 		}
-		context.lineTo(s*clickX[i], s*clickY[i]);
+		context.lineTo(cx + s * clickX[i], cy + s * clickY[i]);
 		context.closePath();
 		context.stroke();
 	}
 
+	console.log(`Offset: ${o}`)
 }
 
