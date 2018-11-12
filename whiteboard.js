@@ -5,7 +5,17 @@ const canvasConfig = {
 	zoomLevels: [0.1, 0.2, 0.5, 0.75, 0.8, 0.9, 1, 1.5, 2, 2.5, 3],
 	zoomLevel: 6,
 	centerPos: [0, 0],
-	scrollSpeed: 10
+	scrollSpeed: 10,
+	keyStates: {},
+	redrawScheduled: true,
+}
+
+function keyIsDown(keyName) {
+	return (canvasConfig.keyStates[keyName] === undefined) ? false : canvasConfig.keyStates[keyName];
+}
+
+function setKey(keyName, state){
+	canvasConfig.keyStates[keyName] = state;
 }
 
 document.addEventListener("DOMContentLoaded", main);
@@ -20,7 +30,28 @@ function main() {
 
 	initCanvasEvents(canvas, context);
 	initEvents(context);
+
+	gameLoop(1, context);
 };
+
+let old_timestamp = undefined;
+
+function gameLoop(du, context) {
+	updateOffset(du);
+	if(canvasConfig.redrawScheduled) {
+		redraw(context);
+	}
+	requestAnimationFrame(timestamp => {
+		if (old_timestamp === undefined) {
+			old_timestamp = timestamp;
+			gameLoop(1, context);
+		} else {
+			const new_du = timestamp - old_timestamp;
+			old_timestamp = timestamp;
+			gameLoop(new_du, context);
+		}
+	});
+}
 
 function initCanvas(canvas){
 	canvas.setAttribute('width', canvasConfig.width);
@@ -36,33 +67,46 @@ function addTool(name, callback){
 	toolsContainer.appendChild(button);
 }
 
+function scheduleRedraw() {
+	canvasConfig.redrawScheduled = true;
+}
+
+function updateOffset(du) {
+	if(keyIsDown("ArrowLeft")) {
+			canvasConfig.centerPos[0] -= canvasConfig.scrollSpeed;
+			scheduleRedraw();
+	}
+
+	if(keyIsDown("ArrowUp")) {
+			canvasConfig.centerPos[1] -= canvasConfig.scrollSpeed;
+			scheduleRedraw();
+	}
+	
+	if(keyIsDown("ArrowRight")) {
+			canvasConfig.centerPos[0] += canvasConfig.scrollSpeed;
+			scheduleRedraw();
+	}
+
+	if(keyIsDown("ArrowDown")) {
+			canvasConfig.centerPos[1] += canvasConfig.scrollSpeed;
+			scheduleRedraw();
+	}
+}
+
 function initEvents(context) {
 	const clearCanvasButton = document.getElementById('clear');
 	clearCanvasButton.onclick = () => {
 		canvasConfig.database.removeAllObjects();
 	}
 
+	document.addEventListener("keyup", e=>{
+		const keyName = e.key;
+		setKey(keyName, false);
+	});
+
 	document.addEventListener("keydown", e=>{
 		const keyName = e.key;
-		console.log(`key: ${keyName} pressed`);
-		switch (keyName) {
-			case "ArrowLeft":
-				canvasConfig.centerPos[0] -= canvasConfig.scrollSpeed;
-				break;
-			case "ArrowUp":
-				canvasConfig.centerPos[1] -= canvasConfig.scrollSpeed;
-				break;
-			case "ArrowRight":
-				canvasConfig.centerPos[0] += canvasConfig.scrollSpeed;
-				break;
-			case "ArrowDown":
-				canvasConfig.centerPos[1] += canvasConfig.scrollSpeed;
-				break;
-		}
-		if(keyName === "ArrowLeft" || keyName === "ArrowRight" ||
-				keyName === "ArrowUp" || keyName === "ArrowDown") {
-			redraw(context);
-		}
+		setKey(keyName, true);
 	});
 
 	const colorSelect = document.getElementById('colorpicker');
@@ -223,6 +267,6 @@ function redraw(context){
 		context.stroke();
 	}
 
-	console.log(`Offset: ${o}`)
+	canvasConfig.redrawScheduled = false;
 }
 
